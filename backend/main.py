@@ -1,5 +1,4 @@
-from __future__ import annotations
-import logging, sys
+from __future__ import annotationsiimport logging, sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
@@ -12,9 +11,19 @@ app = FastAPI(title=settings.app_name, version=settings.app_version)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(chatbot_router)
 
-@app.get("/")
+@app.get("/api", tags=["Root"])
 def root():
-    return {"app": settings.app_name, "websocket": "ws://host/chat/ws"}
+    return {
+        "app": settings.app_name,
+        "version": settings.app_version,
+        "docs": "/docs",
+        "health": "/api/chat/health",
+        "ingest": "POST /api/chat/ingest",
+        "websocket": "ws://host/api/chat/ws",
+    }
+
+
+# ── Entry point ───────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
