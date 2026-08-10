@@ -15,6 +15,7 @@ langchain-community
 
 # -- PDF parsing -------------------------------------------------------
 pypdf
+pdfplumber
 
 # -- Embeddings --------------------------------------------------------
 sentence-transformers
