@@ -5,7 +5,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from service import ChatbotService
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/chat", tags=["Chatbot"])
+router = APIRouter(prefix="/chat", tags=["Chatbot"])
 
 @lru_cache(maxsize=1)
 def get_service() -> ChatbotService:

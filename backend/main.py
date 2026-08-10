@@ -12,7 +12,7 @@ app = FastAPI(title=settings.app_name, version=settings.app_version)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(chatbot_router)
 
-@app.get("/api", tags=["Root"])
+@app.get("/")
 def root():
     return {"app": settings.app_name, "websocket": "ws://host/chat/ws"}
 
