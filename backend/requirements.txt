@@ -1,0 +1,28 @@
+# -- Web framework -----------------------------------------------------
+fastapi
+uvicorn[standard]
+websockets
+
+# -- Config ------------------------------------------------------------
+pydantic
+pydantic-settings
+python-dotenv
+
+# -- LangChain ---------------------------------------------------------
+langchain
+langchain-core
+langchain-community
+
+# -- PDF parsing -------------------------------------------------------
+pypdf
+
+# -- Embeddings --------------------------------------------------------
+sentence-transformers
+
+# -- Vector store ------------------------------------------------------
+chromadb
+
+# -- LLM client (Groq via OpenAI-compatible API) -----------------------
+openai
+
+

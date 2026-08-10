@@ -1,0 +1,10 @@
+.env
+backend/portvenv/
+backend/chroma_db/
+.env
+*.pyc
+__pycache__/
+.vscode/
+dist/
+node_modules/
+.angular/

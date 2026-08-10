@@ -1,0 +1,561 @@
+﻿<!-- NAVBAR -->
+<nav class="navbar" [class.scrolled]="isScrolled">
+  <div class="nav-inner">
+    <a class="nav-logo" href="#" (click)="scrollTo('#hero', $event)">
+      <span class="logo-dot"></span>SANJANA SAO
+    </a>
+    <ul class="nav-links" [class.open]="mobileMenuOpen">
+      <li *ngFor="let link of navLinks; let last = last">
+        <a [href]="link.href" (click)="scrollTo(link.href, $event)">
+          {{ link.label }}<span *ngIf="last" class="nav-icon">&#x2295;</span>
+        </a>
+      </li>
+    </ul>
+    <button class="nav-cta" (click)="downloadResume()">Resume ↓</button>
+    <button class="theme-toggle" (click)="toggleTheme()" [title]="theme === 'dark' ? 'Switch to light' : 'Switch to dark'">
+      <span *ngIf="theme === 'dark'">☀</span>
+      <span *ngIf="theme === 'light'">☾</span>
+    </button>
+    <button class="hamburger" (click)="mobileMenuOpen = !mobileMenuOpen" [class.active]="mobileMenuOpen">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ====================== PROJECT DETAIL PAGE ====================== -->
+<div class="project-detail" *ngIf="activeProject">
+  <!-- background particle canvas -->
+  <canvas id="pd-particles" class="pd-bg-canvas"></canvas>
+  <!-- scan-line sweep overlay -->
+  <div class="pd-scanline"></div>
+
+  <!-- pdTick toggled off/on to replay all CSS animations when switching projects -->
+  <ng-container *ngIf="pdTick">
+  <div class="pd-layout">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="pd-sidebar pd-enter-left">
+      <div class="pd-sidebar-label mono">
+        PROJECT_REGISTRY 
+        <span class="pd-sidebar-count mono">{{ projects.length }}</span>
+      </div>
+      <div class="pd-sidebar-list">
+        <div class="pd-sidebar-item" *ngFor="let p of projects; let idx = index"
+          [class.active]="p.id === activeProject.id"
+          [style.animationDelay]="(idx * 50) + 'ms'"
+          (click)="openProject(p.id)">
+          <span class="pd-si-num mono">{{ idx < 9 ? '0' + (idx + 1) : (idx + 1) }}</span>
+          <span class="pd-si-name">{{ p.title }}</span>
+          <span class="pd-si-ico">{{ p.icon }}</span>
+        </div>
+      </div>
+      <div class="pd-sidebar-footer mono">SYS / {{ currentYear }}</div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="pd-main">
+
+      <!-- hero block -->
+      <div class="pd-hero-block pd-enter-down" style="animation-delay:80ms">
+        <h1 class="pd-title">{{ activeProject.title }}</h1>
+        <div class="pd-subtitle mono">{{ activeProject.subtitle }}</div>
+        <div class="pd-live-stats">
+          <ng-container *ngIf="activeProject.liveStats; else defaultStats">
+            <div *ngFor="let s of activeProject.liveStats">
+              <div class="pd-ls-label mono">{{ s.label }}</div>
+              <div class="pd-ls-val pd-tick">{{ s.val }}</div>
+            </div>
+          </ng-container>
+          <ng-template #defaultStats>
+            <div>
+              <div class="pd-ls-label mono">Tokens Usage</div>
+              <div class="pd-ls-val pd-tick">{{ activeProject.liveTemp }}</div>
+            </div>
+            <div>
+              <div class="pd-ls-label mono">LATENCY</div>
+              <div class="pd-ls-val pd-tick">{{ activeProject.latency }}</div>
+            </div>
+            <div>
+              <div class="pd-ls-label mono">Cost</div>
+              <div class="pd-ls-val pd-tick" style="color:var(--accent-green)">● {{ activeProject.deployStatus }}</div>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- two column: scope + metrics -->
+      <div class="pd-grid-2">
+
+        <!-- scope + steps -->
+        <div class="pd-scope-card pd-enter-down" style="animation-delay:240ms">
+          <div class="pd-card-label mono">PROJECT_SCOPE</div>
+          <p class="pd-scope-text">{{ activeProject.scope }}</p>
+
+          <div class="pd-card-label mono" style="margin-top:24px">SYSTEM_WORKFLOW</div>
+          <div class="pd-steps">
+            <div class="pd-step pd-step-enter" *ngFor="let step of activeProject.steps; let si = index"
+              [style.animationDelay]="(340 + si * 100) + 'ms'">
+              <div class="pd-step-num">{{ step.num }}</div>
+              <div class="pd-step-body">
+                <div class="pd-step-title mono">{{ step.title }}</div>
+                <div class="pd-step-desc">{{ step.desc }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- right column -->
+        <div class="pd-right-col">
+
+          <!-- metric — count-up number -->
+          <div class="pd-metric-card pd-enter-down" style="animation-delay:280ms">
+            <div class="pd-card-label mono">SYSTEM_ACCURACY</div>
+            <div class="pd-big-metric pd-count-up">{{ countedMetricValue || activeProject.metric.value }}</div>
+            <div class="pd-metric-label mono">{{ activeProject.metric.label }}</div>
+            <!-- progress bar -->
+            <div class="pd-metric-bar">
+              <div class="pd-metric-bar-fill"
+                [style]="'--bar-w:' + activeProject.buildFactor + ';'"></div>
+            </div>
+            <div class="pd-metric-note mono">{{ activeProject.metric.note }}</div>
+          </div>
+
+          <!-- stack -->
+          <div class="pd-stack-card pd-enter-down" style="animation-delay:360ms">
+            <div class="pd-card-label mono">STACK_REGISTRY</div>
+            <div class="pd-stack-tags">
+              <span class="pd-stack-tag mono pd-tag-pop" *ngFor="let s of activeProject.stack; let ti = index"
+                [style.animationDelay]="(420 + ti * 60) + 'ms'">{{ s }}</span>
+            </div>
+          </div>
+
+          <!-- contributions -->
+          <div class="pd-contrib-card pd-enter-down" style="animation-delay:440ms">
+            <div class="pd-card-label mono">KEY_CONTRIBUTIONS</div>
+            <ul class="pd-contrib-list">
+              <li class="pd-contrib-enter" *ngFor="let c of activeProject.contributions; let ci = index"
+                [style.animationDelay]="(500 + ci * 80) + 'ms'">{{ c }}</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- shared site footer inside project detail -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="nav-logo"><span class="logo-dot"></span>SANJANA SAO</div>
+        <div class="footer-copy mono text-sm">&copy; {{ currentYear }} Sanjana Sao. Engineered with Precision.</div>
+      </div>
+      <div class="footer-links">
+        <a href="https://www.linkedin.com/in/sanjana-sao-2201451a4/" target="_blank" rel="noopener">LINKEDIN</a>
+        <a href="mailto:sanjana.sao01@gmail.com">EMAIL</a>
+        <a href="https://github.com" target="_blank" rel="noopener">GITHUB</a>
+      </div>
+    </div>
+  </footer>
+
+  </ng-container><!-- end pdTick -->
+</div>
+
+<!-- ====================== MAIN PORTFOLIO ====================== -->
+<div [style.display]="activeProject ? 'none' : 'block'">
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <canvas id="particles"></canvas>
+  <div class="hero-grid-bg"></div>
+  <!-- decorative floating orbs -->
+  <div class="hero-orb hero-orb--1"></div>
+  <div class="hero-orb hero-orb--2"></div>
+  <div class="hero-orb hero-orb--3"></div>
+  <div class="hero-content">
+    <div class="hero-left">
+      <div class="hero-badges">
+        <span class="badge badge-outline">GENAI ENGINEER</span>
+        <span class="badge badge-outline-dim">AI SOLUTIONS ARCHITECT</span>
+        <span class="badge badge-online"><span class="blink-dot"></span>AVAILABLE FOR OPPORTUNITIES</span>
+      </div>
+      <h1 class="hero-title">
+        Transforming<br>
+        <span class="gradient-text">Ideas into Intelligent</span><br>
+        AI Products.
+      </h1>
+      <p class="hero-sub">
+        I build production-ready AI applications using LLMs, Langchain, LangGraph, FastAPI, and vector databases. My focus is on AI agents, RAG systems, and enterprise automation that solve real business problems.
+      </p>
+      <div class="hero-actions">
+        <button class="btn-primary" (click)="scrollTo('#contact', $event)">Initiate Handshake</button>
+        <button class="btn-ghost" (click)="copyEmail()">
+          <span class="btn-icon">&#x2B21;</span>
+          {{ emailCopied ? '✓ Copied!' : 'Copy Email' }}
+        </button>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="profile-card">
+        <div class="profile-image-wrap">
+          <div class="profile-glow"></div>
+          <div class="profile-avatar">
+            <img src="Profile1.jpg" alt="Sanjana Sao" style="width:100%;height:100%;object-fit:cover;border-radius:14px;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+            <svg style="display:none;width:100%;height:100%" viewBox="0 0 200 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="bgGrad" cx="50%" cy="30%" r="70%">
+                  <stop offset="0%" stop-color="#182436"/>
+                  <stop offset="100%" stop-color="#080c10"/>
+                </radialGradient>
+                <radialGradient id="skinGrad" cx="50%" cy="40%" r="60%">
+                  <stop offset="0%" stop-color="#c8a882"/>
+                  <stop offset="100%" stop-color="#9a7050"/>
+                </radialGradient>
+                <radialGradient id="glowRad" cx="50%" cy="0%" r="80%">
+                  <stop offset="0%" stop-color="rgba(0,229,255,0.15)"/>
+                  <stop offset="100%" stop-color="rgba(0,229,255,0)"/>
+                </radialGradient>
+              </defs>
+              <rect width="200" height="260" fill="url(#bgGrad)" rx="12"/>
+              <ellipse cx="100" cy="20" rx="90" ry="40" fill="url(#glowRad)"/>
+              <path d="M40 260 Q40 190 70 175 Q85 168 100 168 Q115 168 130 175 Q160 190 160 260Z" fill="#9a7050"/>
+              <path d="M20 260 Q30 210 70 200 Q85 195 100 195 Q115 195 130 200 Q170 210 180 260Z" fill="#0f1923"/>
+              <path d="M88 200 L100 220 L112 200" stroke="rgba(0,229,255,0.3)" stroke-width="1" fill="none"/>
+              <ellipse cx="100" cy="120" rx="44" ry="52" fill="url(#skinGrad)"/>
+              <path d="M56 110 Q58 70 100 65 Q142 70 144 110 Q140 85 100 82 Q60 85 56 110Z" fill="#1a1008"/>
+              <ellipse cx="57" cy="120" rx="6" ry="9" fill="#9a7050"/>
+              <ellipse cx="143" cy="120" rx="6" ry="9" fill="#9a7050"/>
+              <ellipse cx="84" cy="115" rx="8" ry="6" fill="#1a0a00"/>
+              <ellipse cx="116" cy="115" rx="8" ry="6" fill="#1a0a00"/>
+              <circle cx="87" cy="113" r="2" fill="rgba(255,255,255,0.6)"/>
+              <circle cx="119" cy="113" r="2" fill="rgba(255,255,255,0.6)"/>
+              <path d="M76 107 Q84 103 92 106" stroke="#1a1008" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <path d="M108 106 Q116 103 124 107" stroke="#1a1008" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <path d="M97 120 Q94 132 96 136 Q100 139 104 136 Q106 132 103 120" fill="rgba(0,0,0,0.12)"/>
+              <path d="M90 148 Q100 154 110 148" stroke="#7a4030" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+        </div>
+        <div class="status-chip">
+          <span class="status-dot"></span>
+          <span class="mono">Role: <span class="accent">AI/ML Engineer</span></span>
+        </div>
+        <div class="profile-meta">
+          <div class="mono text-sm">Expertise:</div>
+          <div class="mono text-sm accent">AI Agents • RAG • LLMs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<section class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item reveal" *ngFor="let stat of stats">
+      <div class="stat-value">{{ stat.value }}</div>
+      <div class="stat-label mono">{{ stat.label }}</div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section class="section section--alt" id="experience">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-line"></div>
+      <h2>Career Logs</h2>
+      <p class="section-sub">A timeline of my professional journey, highlighting the AI solutions, projects, and technologies I've worked with.</p>
+    </div>
+    <div class="timeline">
+      <div class="timeline-item reveal" *ngFor="let exp of experiences">
+        <div class="timeline-dot" [class.active]="exp.statusClass === 'active'"></div>
+        <div class="timeline-card">
+          <div class="tl-header">
+            <div>
+              <div class="tl-company-role">
+                <span class="tl-company">{{ exp.company }}</span>
+                <span class="tl-sep">|</span>
+                <span class="tl-role">{{ exp.role }}</span>
+              </div>
+              <div class="tl-period mono">{{ exp.period }}</div>
+            </div>
+            <span class="status-badge" [class.badge-active]="exp.statusClass === 'active'" [class.badge-done]="exp.statusClass === 'done'">
+              {{ exp.status }}
+            </span>
+          </div>
+          <ul class="tl-bullets">
+            <li *ngFor="let b of exp.bullets">{{ b }}</li>
+          </ul>
+          <div class="tl-tags">
+            <span class="tag" *ngFor="let tag of exp.tags">{{ tag }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section class="section" id="projects">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-line"></div>
+      <h2>Featured Projects</h2>
+      <p class="section-sub">From AI agents to enterprise RAG systems, these projects showcase my approach to building production-ready AI solutions.</p>
+    
+    </div>
+    <div class="projects-grid">
+      <ng-container *ngFor="let p of projects; let i = index">
+        <div *ngIf="p.featured" class="project-card project-card--featured reveal" [attr.data-color]="p.color" (click)="openProject(p.id)">
+          <div class="featured-visual">
+            <canvas id="neural-canvas"></canvas>
+            <div class="featured-visual-label mono">NEURAL_NET // ACTIVE</div>
+          </div>
+          <div class="featured-body">
+            <div class="project-card-top">
+              <div class="project-icon-badge">
+                <span class="project-icon-sym">{{ p.icon }}</span>
+                <span class="project-icon-lbl mono">{{ p.iconLabel }}</span>
+              </div>
+              <div class="project-tags">
+                <span class="tag" *ngFor="let t of p.tags">{{ t }}</span>
+              </div>
+            </div>
+            <h3 class="project-title">{{ p.title }}</h3>
+            <p class="project-desc">{{ p.description }}</p>
+            <div class="project-links"><span class="project-link mono">VIEW PROJECT →</span></div>
+          </div>
+          <div class="project-glow"></div>
+        </div>
+        <div *ngIf="!p.featured" class="project-card reveal" [attr.data-color]="p.color" (click)="openProject(p.id)">
+          <div class="project-card-top">
+            <div class="project-icon-badge">
+              <span class="project-icon-sym">{{ p.icon }}</span>
+              <span class="project-icon-lbl mono">{{ p.iconLabel }}</span>
+            </div>
+            <div class="project-tags">
+              <span class="tag" *ngFor="let t of p.tags">{{ t }}</span>
+            </div>
+          </div>
+          <h3 class="project-title">{{ p.title }}</h3>
+          <p class="project-desc">{{ p.description }}</p>
+          <div class="project-links"><span class="project-link mono">VIEW PROJECT →</span></div>
+          <div class="project-glow"></div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</section>
+
+<!-- TECH SPECTRUM -->
+<section class="section section--alt" id="skills">
+  <div class="container">
+    <div class="section-header reveal center">
+      <div class="section-label mono">TECH SPECTRUM</div>
+      <div class="section-divider"></div>
+    </div>
+    <div class="tech-grid">
+      <div class="tech-card reveal" *ngFor="let tech of techSpectrum">
+        <div class="tech-card-header">
+          <span class="tech-icon">{{ tech.icon }}</span>
+          <span class="tech-category mono">{{ tech.category }}</span>
+        </div>
+        <ul class="tech-list">
+          <li *ngFor="let item of tech.preview" class="mono">{{ item }}</li>
+        </ul>
+        <div class="tech-more-hint mono" (click)="openTechOverlay(tech.category)" style="cursor:pointer;">+{{ tech.items.length - tech.preview.length }} more</div>
+      </div>
+    </div>
+    <!-- View Full Stack CTA -->
+    <div class="tech-view-more reveal">
+      <button class="btn-view-stack mono" (click)="openTechOverlay()">
+        <span>◈</span> VIEW FULL STACK
+        <span class="tech-total-badge">{{ getTotalSkills() }} skills</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ── TECH OVERLAY ──────────────────────────────────────────────── -->
+<div class="tech-overlay" [class.open]="techOverlayOpen" (click)="closeTechOverlay()">
+  <div class="tech-overlay-panel" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="tech-overlay-header">
+      <div>
+        <div class="tech-overlay-title">FULL TECH STACK</div>
+        <div class="tech-overlay-sub mono">{{ getTotalSkills() }} skills across {{ techSpectrum.length }} domains</div>
+      </div>
+      <button class="tech-overlay-close mono" (click)="closeTechOverlay()">✕ CLOSE</button>
+    </div>
+
+    <!-- All categories -->      <div class="tech-overlay-grid">
+      <div class="tech-overlay-card" *ngFor="let tech of techSpectrum"
+        [class.tech-overlay-card--active]="activeTechCategory === tech.category">
+        <div class="tech-overlay-card-header">
+          <span class="tech-overlay-icon">{{ tech.icon }}</span>
+          <span class="tech-overlay-cat mono">{{ tech.category }}</span>
+          <span class="tech-overlay-count mono">{{ tech.items.length }}</span>
+        </div>
+        <div class="tech-overlay-tags">
+          <span class="tech-pill mono" *ngFor="let item of tech.items">{{ item }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EDUCATION & CERTIFICATIONS -->
+<section class="section" id="education">
+  <div class="container edu-grid">
+    <div class="edu-col">
+      <div class="section-header reveal">
+        <div class="section-line"></div>
+        <h2>Academic Credentials</h2>
+      </div>
+      <div class="edu-card reveal">
+        <div class="edu-icon">&#x1F393;</div>
+        <div>
+          <div class="edu-degree">B.Tech in Computer Science</div>
+          <div class="edu-school">Rungta College of Engineering & Technology, Bhilai</div>
+          <div class="mono text-sm muted">CGPA: 8.2</div>
+        </div>
+      </div>
+      <div class="edu-card reveal">
+        <div class="edu-icon">&#x1F3EB;</div>
+        <div>
+          <div class="edu-degree">Senior Secondary Education</div>
+          <div class="edu-school">St. Xavier's School</div>
+          <div class="mono text-sm muted">PERCENTAGE: 76%</div>
+        </div>
+      </div>
+    </div>
+    <div class="edu-col">
+      <div class="section-header reveal">
+        <div class="section-line"></div>
+        <h2>Certifications &amp; Honors</h2>
+      </div>
+      <div class="cert-card reveal" *ngFor="let cert of certifications">
+        <div class="cert-icon">{{ cert.icon }}</div>
+        <div class="cert-body">
+          <div class="cert-title">{{ cert.title }}</div>
+          <div class="cert-desc">{{ cert.description }}</div>
+        </div>
+        <span class="cert-badge mono">{{ cert.badge }}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BEYOND ENGINEERING -->
+<section class="section beyond-section" id="contact">
+  <div class="container">
+    <div class="beyond-grid">
+      <div class="beyond-main reveal">
+        <h2 class="beyond-title">Beyond Engineering</h2>
+        <p class="beyond-sub">A few things I enjoy outside of work that help me stay balanced, refreshed, and inspired.</p>
+      </div>
+      <div class="beyond-card reveal">
+        <div class="beyond-card-icon">&#x265F;</div>
+        <div class="beyond-card-title">Chess</div>
+        <div class="beyond-card-desc">I enjoy playing chess in my free time. It's one of my favourite ways to relax and recharge.</div>
+      </div>
+      <div class="beyond-card reveal">
+        <div class="beyond-card-icon" style="font-variant-emoji: text;">🏋&#xFE0E;</div>
+        <div class="beyond-card-title">Fitness</div>
+        <div class="beyond-card-desc">I exercise 4–5 days a week to balance long hours of desk work and keep myself active and healthy.</div>
+      </div>
+      <div class="beyond-card reveal">
+        <div class="beyond-card-icon">&#x2708;</div>
+        <div class="beyond-card-title">Travel</div>
+        <div class="beyond-card-desc">I travel whenever I can to explore new places and experience the world's beauty.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="nav-logo"><span class="logo-dot"></span>SANJANA SAO</div>
+      <div class="footer-copy mono text-sm">&copy; {{ currentYear }} Sanjana Sao. Engineered with Precision.</div>
+    </div>
+    <div class="footer-links">
+      <a href="https://linkedin.com" target="_blank" rel="noopener">LINKEDIN</a>
+      <a href="mailto:sanjana.sao01@gmail.com">EMAIL</a>
+      <a href="https://github.com" target="_blank" rel="noopener">GITHUB</a>
+    </div>
+  </div>
+</footer>
+
+</div><!-- end !activeProject -->
+
+<!-- ====================== CHATBOT WIDGET ====================== -->
+<!-- Floating bubble — always visible -->
+<button class="chat-bubble" (click)="toggleChat()" [class.active]="chatOpen" [title]="chatOpen ? 'Close chat' : 'Ask Sanjana\'s AI'">
+  <span class="chat-bubble-icon" *ngIf="!chatOpen">◈</span>
+  <span class="chat-bubble-icon" *ngIf="chatOpen">✕</span>
+  <span class="chat-bubble-label mono" *ngIf="!chatOpen">ASK</span>
+  <span class="chat-unread-dot" *ngIf="chatHasUnread && !chatOpen"></span>
+</button>
+
+<!-- Slide-up panel -->
+<div class="chat-panel" [class.open]="chatOpen">
+
+  <!-- Panel header -->
+  <div class="chat-header">
+    <div class="chat-header-left">
+      <span class="chat-header-icon">◈</span>
+      <div>
+        <div class="chat-header-title mono">SANJANA_AI</div>
+        <div class="chat-header-sub mono"><span class="blink-dot"></span> ONLINE · RAG-POWERED</div>
+      </div>
+    </div>
+    <button class="chat-close-btn" (click)="toggleChat()">✕</button>
+  </div>
+
+  <!-- Messages -->
+  <div class="chat-messages">
+    <!-- Welcome bubble (only when empty) -->
+    <div class="chat-msg chat-msg--bot" *ngIf="chatMessages.length === 0">
+      <div class="chat-msg-bubble">
+        Hi! I'm Sanjana's portfolio assistant, powered by her resume. Ask me anything —
+        her projects, skills, experience, or tech stack.
+        <div class="chat-suggestions">
+          <button class="chat-sugg mono" (click)="chatInput='What projects has she built?'; sendChat()">What projects has she built?</button>
+          <button class="chat-sugg mono" (click)="chatInput='What is her tech stack?'; sendChat()">What is her tech stack?</button>
+          <button class="chat-sugg mono" (click)="chatInput='Tell me about her work experience'; sendChat()">Work experience?</button>
+        </div>
+      </div>
+    </div>
+    <!-- Conversation messages -->
+    <div *ngFor="let m of chatMessages"
+      class="chat-msg"
+      [class.chat-msg--user]="m.role === 'user'"
+      [class.chat-msg--bot]="m.role === 'bot'">
+      <div class="chat-msg-bubble">
+        {{ m.text }}<span class="chat-cursor" *ngIf="m.streaming">▌</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input bar -->
+  <div class="chat-input-bar">
+    <input
+      class="chat-input mono"
+      [(ngModel)]="chatInput"
+      (keydown)="onChatKey($event)"
+      placeholder="Ask about Sanjana's work…"
+      maxlength="500"
+      autocomplete="off"
+    />
+    <button class="chat-send" (click)="sendChat()" [disabled]="!chatInput.trim()">
+      <span>⟶</span>
+    </button>
+  </div>
+
+</div>
