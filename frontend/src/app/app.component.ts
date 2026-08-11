@@ -508,7 +508,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private connectWs(): void {
-    this.ws = new WebSocket('ws://localhost:8000/chat/ws');
+    this.ws = new WebSocket('wss://portfolio-xi-wheat-yj4qx19bbp.vercel.app/api/chat/ws');
     this.ws.onmessage = (ev) => {
       const msg = JSON.parse(ev.data);
       if (msg.type === 'token') {
