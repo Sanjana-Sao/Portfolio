@@ -8,6 +8,12 @@ app = FastAPI(title=settings.app_name, version=settings.app_version)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(chatbot_router)
 
+
+@app.get("/api/test")
+def test_api():
+    return {"message": "API route is working"}
+
+
 @app.get("/api", tags=["Root"])
 def root():
     return {
