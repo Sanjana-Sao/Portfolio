@@ -5,6 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:github": "ng build --configuration production",
+    "deploy:github": "npm run build:github && angular-cli-ghpages --dir=dist/portfolio/browser",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
