@@ -335,7 +335,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   downloadResume(): void {
     const link = document.createElement('a');
-    link.href = '/Sanjana_Sao_Resume.pdf';
+    link.href = new URL('Sanjana_Sao_Resume.pdf', document.baseURI).href;
     link.download = 'Sanjana_Sao_Resume.pdf';
     link.target = '_blank';
     document.body.appendChild(link);
